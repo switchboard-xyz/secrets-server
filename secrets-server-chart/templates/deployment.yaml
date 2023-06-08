@@ -1,0 +1,152 @@
+{{- $values := .Values -}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: secrets-server
+  name: secrets-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secrets-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: secrets-server
+        should_scrape: scrape
+    spec:
+      containers:
+      - env:
+        -
+          name: CONFIGS
+          value: {{ $values.configs }}
+
+
+      # IMAGE / RESOURCES
+        image: {{ $values.image }}
+        imagePullPolicy: Always
+        name: secrets-server
+        securityContext:
+          privileged: true
+
+
+
+        ports:
+        - name: web
+          containerPort: 9090
+          protocol: TCP
+        - name: liveness-port
+          containerPort: 8080
+          protocol: TCP
+
+        # {{ if ne $values.command "shell" }}
+        # # https://github.com/kubernetes/kubernetes/issues/89898#issuecomment-876539217
+        # # Wait for the container to startup and signal they are ready to receive traffic from k8s
+        # startupProbe:
+          # httpGet:
+            # path: /healthz
+            # port: liveness-port
+          # initialDelaySeconds: 5
+          # failureThreshold: 30
+          # periodSeconds: 5
+          # timeoutSeconds: 10
+        # # Check whether the pod is ready to receive traffic. If this fails it will create a new pod
+        # livenessProbe:
+          # exec:
+            # command:
+              # - sh
+              # - -c
+              # - "curl --fail http://localhost:8080/healthz || exit 1 "
+          # initialDelaySeconds: 10
+          # periodSeconds: 30
+          # failureThreshold: 3
+          # timeoutSeconds: 5
+        # {{ end }}
+
+        {{ if  $values.sgx.type }}
+        # SGX ORACLE
+        resources:
+          limits:
+            cpu: 1200m
+            memory: 2Gi
+            {{ if eq $values.sgx.type "azure" }}
+            kubernetes.azure.com/sgx_epc_mem_in_MiB: 10
+            sgx.intel.com/enclave: 1
+            sgx.intel.com/provision: 1
+            {{ end }}
+          requests:
+            cpu: 1000m
+            memory: 1Gi
+            {{ if eq $values.sgx.type "azure" }}
+            kubernetes.azure.com/sgx_epc_mem_in_MiB: 10
+            sgx.intel.com/enclave: 1
+            sgx.intel.com/provision: 1
+            {{ end }}
+        {{ else }}
+        # LEGACY ORACLE
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: liveness-port
+          initialDelaySeconds: 5
+          failureThreshold: 30
+          periodSeconds: 5
+          timeoutSeconds: 10
+        # Check whether the pod is ready to receive traffic. If this fails it will create a new pod
+#        livenessProbe:
+#          exec:
+#            command:
+#              - sh
+#              - -c
+#              - "curl --fail http://localhost:8080/healthz || exit 1"
+#          initialDelaySeconds: 10
+#          periodSeconds: 30
+#          failureThreshold: 3
+#          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 3000m
+            memory: 3Gi
+          requests:
+            cpu: 3000m
+            memory: 3Gi
+        {{ end }}
+
+
+#        volumeMounts:
+#        - mountPath: /home/credentials/
+#          name: google-cloud-key
+#        - mountPath: /var/run/aesmd
+#          name: var-run-aesmd
+#        - mountPath: /dev/sgx/enclave
+#          name: dev-sgx-enclave
+#        - mountPath: /dev/sgx/provision
+#          name: dev-sgx-provision
+
+        # - mountPath: /dev/isgx
+          # name: dev-isgx
+#          
+#      volumes:
+#      - name: var-run-aesmd
+#        hostPath:
+#          path: /var/run/aesmd/
+#      - name: dev-sgx-enclave
+#        hostPath:
+#          path: /dev/sgx/enclave
+#      - name: dev-sgx-provision
+#        hostPath:
+#          path: /dev/sgx/provision
+#          
+      # - name: dev-isgx
+        # hostPath:
+          # path: /dev/isgx
+
+
+
+{{ end }}

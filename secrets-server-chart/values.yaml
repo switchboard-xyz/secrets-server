@@ -1,0 +1,52 @@
+# ####################################################
+# USE THIS FILE FOR ANY DEFAULT VALUES FOR ALL ORACLES
+# ####################################################
+configs: ""
+debug: ""
+verbose: ""
+chain: ""
+googlePayerSecretPath: ""
+solanaMainnetRpc: ""
+cluster: ""
+networkId: ""
+heartbeatInterval: "15"
+gcpConfigBucket: ""
+googleApplicationCredentials: ""
+rpcUrl: ""
+evmChainId: "1116"
+wsUrl: ""
+payerSecret: ""
+payerSecretName: ""
+image: ""
+feedRelayerEnabled: ""
+computeUnitPrice: ""
+computeUnitLimit: ""
+azureSecretPath: ""
+serviceAccountJson: "" #base64 encoded json
+appType: "oracle"
+sgx:
+  type: "hello"
+  memoryMiB: 0
+  cpu: 0
+txTelemetry:
+  pgHost: ""
+  pgUser: ""
+  pgDatabase: ""
+  pgPassword: ""
+ingress:
+  enabled: false
+oracleKeys:
+  - name: idx-1
+    data: ""
+    queue: ""
+    queueAddress: ""
+    payerSecret: ""
+    oracleQueueKey: ""
+    solanaOracleQueueKey: ""
+    sasQueue: ""
+    dockerUser: ""
+    dockerKey: ""
+    ipfsUrl: "https://ipfs.infura.io:5001"
+    ipfsKey: "XXX"
+    ipfsSecret: "XXX"
+
