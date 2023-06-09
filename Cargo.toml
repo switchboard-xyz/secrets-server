@@ -11,3 +11,8 @@ actix-web = "4.0"
 serde = { version = "1.0", features = ["derive"] }
 sgx-dcap-quoteverify-rs = { version = "0.2.0", path = "lib/sgx-dcap-quoteverify-rs"}
 sgx-dcap-quoteverify-sys = { version = "0.2.0", path = "lib/sgx-dcap-quoteverify-sys" }
+sgx-quote = "0.1.0"
+sha2 = "0.10.6"
+rsa = "0.5"
+rand = "0.8.4"
+

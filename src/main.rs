@@ -5,6 +5,12 @@ use sgx_dcap_quoteverify_rs::*;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::Deserialize;
+use sgx_quote;
+use sha2::{Sha256, Digest};
+use rsa::{PublicKey, RSAPublicKey, PaddingScheme};
+use rand::rngs::OsRng;
+use rand::RngCore;
+
 
 use std::mem;
 
@@ -13,7 +19,7 @@ use std::mem;
 /// # Param
 /// - **quote**\
 /// ECDSA quote buffer.
-pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
+pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> (bool, Vec<String>) {
     let mut collateral_expiration_status = 1u32;
     let mut quote_verification_result = sgx_ql_qv_result_t::SGX_QL_QV_RESULT_UNSPECIFIED;
 
@@ -50,7 +56,7 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
                 "\tError: tee_get_quote_supplemental_data_size failed: {:#04x}",
                 e as u32
             );
-            return false;
+            return (false, vec![]);
         }
     }
 
@@ -71,7 +77,7 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
         }
         Err(e) => {
             println!("\tError: App: tee_verify_quote failed: {:#04x}", e as u32);
-            return false;
+            return (false, vec![]);
         }
     }
 
@@ -86,7 +92,7 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
                 // println!("\tInfo: App: Verification completed successfully.");
             } else {
                 println!("\tWarning: App: Verification completed, but collateral is out of date based on 'expiration_check_date' you provided.");
-                return false;
+                return (false, vec![]);
             }
         }
         sgx_ql_qv_result_t::SGX_QL_QV_RESULT_CONFIG_NEEDED
@@ -136,9 +142,10 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
         };
         if let Ok(s) = std::str::from_utf8(sa_list) {
             println!("\tInfo: Advisory ID: {}", s);
+            return (true, s.split(',').collect());
         }
     }
-    true
+    (true, vec![])
 }
 
 
@@ -149,16 +156,50 @@ struct VerifyPayload {
 }
 
 async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
+    let configs_str = std::env::var("CONFIGS").unwrap();
+    let configs: Configs = serde_json::from_str(configs_str).unwrap();
     let current_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
         .as_secs() as i64;
-    let is_success = ecdsa_quote_verification(&payload.quote, current_time);
-    if is_success {
-        HttpResponse::Ok().body("{}")
-    } else {
-        HttpResponse::Unauthorized().finish()
+    let (is_success, advisories) = ecdsa_quote_verification(&payload.quote, current_time);
+    if !is_success {
+        return HttpResponse::Unauthorized().finish();
     }
+    if advisory in advisories {
+        if !configs.permittedAdvisories.contains(advisory) {
+            return HttpResponse::Unauthorized().finish();
+        }
+    }
+    let quote = sgx_quote::Quote::parse(&payload.quote).unwrap();
+    let mut mr_enclave_found = false;
+    for mr_enclave in configs.mrEnclaves {
+        if quote.isv_report.mrenclave == hex::decode(mr_enclave).unwrap() {
+            mr_enclave_found = true;
+            break;
+        }
+    }
+    if !mr_enclave_found {
+        return HttpResponse::Unauthorized().finish();
+    }
+    let keyhash = &quote.isv_report.report_data[..32];
+    if keyhash != Sha256::digest(&payload.pubkey) {
+        return HttpResponse::Unauthorized().finish();
+    }
+    let public_key = RSAPublicKey::from_pkcs1(&payload.pubkey).unwrap();
+    let mut rng = OsRng {};
+    let padding = PaddingScheme::PKCS1;
+    let ciphertext = public_key.encrypt(&mut rng, padding, configs_str.as_bytes()).unwrap();
+
+    // TODO: encrypt with pubkey
+    HttpResponse::Ok().body(configs_str)
+}
+
+#[derive(Debug, Deserialize)]
+struct Configs {
+    mrEnclaves: Vec<String>,
+    permittedAdvisories: Vec<String>,
+    keys: HashMap<String, String>,
 }
 
 #[actix_web::main]

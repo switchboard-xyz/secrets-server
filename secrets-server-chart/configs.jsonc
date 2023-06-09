@@ -6,8 +6,6 @@
         "INTEL-SA-00615" // Mitigation: https://github.com/gramineproject/gramine/pull/1237
     ],
     "keys": {
-        "API_KEY_1": "abc123",
-        "API_KEY_2": "abc123",
-        "API_KEY_3": "abc123",
+        "POLYGOIN_API_KEY": "gCIo3HatfRnu5ENCdjSEPUdwoiapGig5", // https://polygon.io/docs/crypto/get_v2_snapshot_locale_global_markets_crypto_tickers
     }
 }
