@@ -6,7 +6,7 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt"
 spec:
   rules:
-  - host: secrets.switchboard.xyz
+  - host: {{ $.Values.host }}
     http:
       paths:
       - path: /
@@ -20,7 +20,5 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - secrets.switchboard.xyz
+    - {{ $.Values.host }}
     secretName: secrets-server-cert-manager-tls
-
-
