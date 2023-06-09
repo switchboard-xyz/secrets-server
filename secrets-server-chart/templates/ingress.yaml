@@ -22,8 +22,5 @@ spec:
   - hosts:
     - secrets.switchboard.xyz
     secretName: secrets-server-cert-manager-tls
-#status:
-#  loadbalancer:
-#    ingress:
-#    - ip: 34.136.106.49
+
 
