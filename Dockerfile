@@ -27,6 +27,7 @@ RUN apt-get install -y \
     vim
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.69.0
 ENV PATH=$PATH:/root/.cargo/bin/
 
 WORKDIR /app
