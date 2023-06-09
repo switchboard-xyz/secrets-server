@@ -1,11 +1,10 @@
 #![allow(unused_assignments)]
 #![allow(clippy::wildcard_in_or_patterns)]
-
+use sgx_dcap_quoteverify_rs::*;
 
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::Deserialize;
-// use sgx_dcap_quoteverify_rs::*;
 
 use std::mem;
 
@@ -14,7 +13,6 @@ use std::mem;
 /// # Param
 /// - **quote**\
 /// ECDSA quote buffer.
-
 pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
     let mut collateral_expiration_status = 1u32;
     let mut quote_verification_result = sgx_ql_qv_result_t::SGX_QL_QV_RESULT_UNSPECIFIED;
@@ -155,7 +153,7 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
         .as_secs() as i64;
-    let is_success = ecdsa_quote_verification(payload.quote, current_time);
+    let is_success = ecdsa_quote_verification(&payload.quote, current_time);
     if is_success {
         HttpResponse::Ok().body("{}")
     } else {
