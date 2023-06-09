@@ -32,6 +32,7 @@ ENV PATH=$PATH:/root/.cargo/bin/
 WORKDIR /app
 
 COPY src /app/src
+COPY lib /app/lib
 COPY Cargo.toml /app/Cargo.toml
 
 RUN --mount=type=cache,target=/root/.cargo/registry --mount=type=cache,target=/app/target cargo build && mv target/debug/secrets-server /app
