@@ -6,6 +6,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.asc] https://p
 # install Azure DCAP library
 RUN apt-get update
 RUN apt install -y az-dcap-client libsgx-dcap-default-qpl libsgx-dcap-quote-verify-dev
+ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt-get install -y \
     build-essential \
     clang \
