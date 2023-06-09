@@ -1,0 +1,13 @@
+{
+    "mrEnclaves": [
+        "44239ca94f74fe51e2da682f8d3c50f27cc36588f1270c670472032770ca3ef0"
+    ],
+    "permittedAdvisories": [
+        "INTEL-SA-00615" // Mitigation: https://github.com/gramineproject/gramine/pull/1237
+    ],
+    "keys": {
+        "API_KEY_1": "abc123",
+        "API_KEY_2": "abc123",
+        "API_KEY_3": "abc123",
+    }
+}
