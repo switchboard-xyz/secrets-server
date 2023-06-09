@@ -1,6 +1,5 @@
 # ####################################################
 # USE THIS FILE FOR ANY DEFAULT VALUES FOR ALL ORACLES
 # ####################################################
-configs: ""
 image: ""
 

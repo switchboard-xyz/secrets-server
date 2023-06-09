@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: secrets-server-service
+spec:
+  selector:
+    app: secrets-server
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      name: server
+
+        

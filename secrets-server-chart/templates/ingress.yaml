@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: secrets-server-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+spec:
+  rules:
+  - host: secrets.switchboard.xyz
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific #Prefix
+        backend:
+          service:
+            name: secrets-server-service
+            port:
+              number: 8080
+
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - secrets.switchboard.xyz
+    secretName: secrets-server-cert-manager-tls
+#status:
+#  loadbalancer:
+#    ingress:
+#    - ip: 34.136.106.49
+

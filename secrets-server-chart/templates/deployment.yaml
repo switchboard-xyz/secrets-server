@@ -25,7 +25,7 @@ spec:
       - env:
         -
           name: CONFIGS
-          value: {{ $values.configs }}
+          value: {{ .Files.Get "configs.json" | quote }}
 
 
       # IMAGE / RESOURCES
