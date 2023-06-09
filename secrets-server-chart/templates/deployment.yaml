@@ -69,27 +69,7 @@ spec:
           # timeoutSeconds: 5
         # {{ end }}
 
-        {{ if  $values.sgx.type }}
-        # SGX ORACLE
-        resources:
-          limits:
-            cpu: 1200m
-            memory: 2Gi
-            {{ if eq $values.sgx.type "azure" }}
-            kubernetes.azure.com/sgx_epc_mem_in_MiB: 10
-            sgx.intel.com/enclave: 1
-            sgx.intel.com/provision: 1
-            {{ end }}
-          requests:
-            cpu: 1000m
-            memory: 1Gi
-            {{ if eq $values.sgx.type "azure" }}
-            kubernetes.azure.com/sgx_epc_mem_in_MiB: 10
-            sgx.intel.com/enclave: 1
-            sgx.intel.com/provision: 1
-            {{ end }}
-        {{ else }}
-        # LEGACY ORACLE
+ 
         startupProbe:
           httpGet:
             path: /healthz
@@ -116,7 +96,6 @@ spec:
           requests:
             cpu: 3000m
             memory: 3Gi
-        {{ end }}
 
 
 #        volumeMounts:

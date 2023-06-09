@@ -5,7 +5,7 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::Deserialize;
-use sgx_dcap_quoteverify_rs::*;
+// use sgx_dcap_quoteverify_rs::*;
 
 use std::mem;
 
@@ -14,6 +14,7 @@ use std::mem;
 /// # Param
 /// - **quote**\
 /// ECDSA quote buffer.
+/*
 pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
     let mut collateral_expiration_status = 1u32;
     let mut quote_verification_result = sgx_ql_qv_result_t::SGX_QL_QV_RESULT_UNSPECIFIED;
@@ -141,7 +142,7 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
     }
     true
 }
-
+*/
 
 #[derive(Deserialize)]
 struct VerifyPayload {
@@ -150,17 +151,15 @@ struct VerifyPayload {
 }
 
 async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
-    // TODO: Add your verification logic here
-    let current_time = SystemTime::now()
-    .duration_since(UNIX_EPOCH)
-    .expect("Time went backwards")
-    .as_secs() as i64;
-    const success: bool = ecdsa_quote_verification(&payload.quote, current_time);
-    if success {
-        HttpResponse::Ok().body("{}");
-
+    // let current_time = SystemTime::now()
+    //     .duration_since(UNIX_EPOCH)
+    //     .expect("Time went backwards")
+    //     .as_secs() as i64;
+    const SUCCESS: bool = true;
+    if SUCCESS {
+        HttpResponse::Ok().body("{}")
     } else {
-        HttpResponse::Unauthorized();
+        HttpResponse::Unauthorized().finish()
     }
 }
 
@@ -172,7 +171,7 @@ async fn main() -> std::io::Result<()> {
                 .route(web::post().to(verify))
         )
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
