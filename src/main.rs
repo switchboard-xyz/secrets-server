@@ -14,7 +14,7 @@ use std::mem;
 /// # Param
 /// - **quote**\
 /// ECDSA quote buffer.
-/*
+
 pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
     let mut collateral_expiration_status = 1u32;
     let mut quote_verification_result = sgx_ql_qv_result_t::SGX_QL_QV_RESULT_UNSPECIFIED;
@@ -142,7 +142,7 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> bool {
     }
     true
 }
-*/
+
 
 #[derive(Deserialize)]
 struct VerifyPayload {
@@ -151,12 +151,12 @@ struct VerifyPayload {
 }
 
 async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
-    // let current_time = SystemTime::now()
-    //     .duration_since(UNIX_EPOCH)
-    //     .expect("Time went backwards")
-    //     .as_secs() as i64;
-    const SUCCESS: bool = true;
-    if SUCCESS {
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs() as i64;
+    let is_success = ecdsa_quote_verification(payload.quote, current_time);
+    if is_success {
         HttpResponse::Ok().body("{}")
     } else {
         HttpResponse::Unauthorized().finish()
