@@ -150,7 +150,7 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> (bool, Vec<S
     (true, vec![])
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct VerifyPayload {
     quote: Vec<u8>,
     pubkey: Vec<u8>,
@@ -159,6 +159,7 @@ struct VerifyPayload {
 async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     let configs_str = std::env::var("CONFIGS").unwrap();
     let configs: Configs = serde_json::from_str(&configs_str).unwrap();
+    println!("Received request: {:#?}", payload);
     let current_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
@@ -208,8 +209,13 @@ struct Configs {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(web::resource("/verify").route(web::post().to(verify))))
-        .bind("0.0.0.0:8080")?
-        .run()
-        .await
+    println!("Server Starting..");
+    HttpServer::new(|| {
+        println!("Started.");
+        App::new().route("/", web::post().to(verify))
+
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
 }
