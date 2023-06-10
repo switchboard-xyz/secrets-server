@@ -5,9 +5,9 @@ use sgx_dcap_quoteverify_rs::*;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use hex;
 use rand::rngs::OsRng;
-use rsa::pkcs8::DecodePublicKey;
 use rsa::Pkcs1v15Encrypt;
 use rsa::RsaPublicKey;
+use rsa::pkcs8::DecodePublicKey;
 use serde::Deserialize;
 use serde_json;
 use sgx_quote;
@@ -189,7 +189,7 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     }
     let public_key = RsaPublicKey::from_public_key_der(&payload.pubkey).unwrap();
     let mut rng = OsRng {};
-    let ciphertext = public_key
+    let _ciphertext = public_key
         .encrypt(&mut rng, Pkcs1v15Encrypt, configs_str.as_bytes())
         .unwrap();
 
@@ -197,6 +197,8 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     HttpResponse::Ok().body(configs_str)
 }
 
+#[allow(dead_code)]
+#[allow(non_snake_case)]
 #[derive(Debug, Deserialize)]
 struct Configs {
     mrEnclaves: Vec<String>,
