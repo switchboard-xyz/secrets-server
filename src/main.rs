@@ -3,16 +3,18 @@
 use sgx_dcap_quoteverify_rs::*;
 
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use std::time::{SystemTime, UNIX_EPOCH};
-use serde::Deserialize;
-use sgx_quote;
-use sha2::{Sha256, Digest};
-use rsa::{PublicKey, RSAPublicKey, PaddingScheme};
+use hex;
 use rand::rngs::OsRng;
-use rand::RngCore;
-
-
+use rsa::pkcs8::DecodePublicKey;
+use rsa::Pkcs1v15Encrypt;
+use rsa::RsaPublicKey;
+use serde::Deserialize;
+use serde_json;
+use sgx_quote;
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 use std::mem;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Quote verification with QVL
 ///
@@ -142,12 +144,11 @@ pub fn ecdsa_quote_verification(quote: &[u8], current_time: i64) -> (bool, Vec<S
         };
         if let Ok(s) = std::str::from_utf8(sa_list) {
             println!("\tInfo: Advisory ID: {}", s);
-            return (true, s.split(',').collect());
+            return (true, s.split(',').map(|s| s.to_string()).collect());
         }
     }
     (true, vec![])
 }
-
 
 #[derive(Deserialize)]
 struct VerifyPayload {
@@ -157,7 +158,7 @@ struct VerifyPayload {
 
 async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     let configs_str = std::env::var("CONFIGS").unwrap();
-    let configs: Configs = serde_json::from_str(configs_str).unwrap();
+    let configs: Configs = serde_json::from_str(&configs_str).unwrap();
     let current_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
@@ -166,8 +167,8 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     if !is_success {
         return HttpResponse::Unauthorized().finish();
     }
-    if advisory in advisories {
-        if !configs.permittedAdvisories.contains(advisory) {
+    for advisory in advisories {
+        if !configs.permittedAdvisories.contains(&advisory) {
             return HttpResponse::Unauthorized().finish();
         }
     }
@@ -183,13 +184,14 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
         return HttpResponse::Unauthorized().finish();
     }
     let keyhash = &quote.isv_report.report_data[..32];
-    if keyhash != Sha256::digest(&payload.pubkey) {
+    if keyhash != Sha256::digest(&payload.pubkey).as_slice() {
         return HttpResponse::Unauthorized().finish();
     }
-    let public_key = RSAPublicKey::from_pkcs1(&payload.pubkey).unwrap();
+    let public_key = RsaPublicKey::from_public_key_der(&payload.pubkey).unwrap();
     let mut rng = OsRng {};
-    let padding = PaddingScheme::PKCS1;
-    let ciphertext = public_key.encrypt(&mut rng, padding, configs_str.as_bytes()).unwrap();
+    let ciphertext = public_key
+        .encrypt(&mut rng, Pkcs1v15Encrypt, configs_str.as_bytes())
+        .unwrap();
 
     // TODO: encrypt with pubkey
     HttpResponse::Ok().body(configs_str)
@@ -204,13 +206,8 @@ struct Configs {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new().service(
-            web::resource("/verify")
-                .route(web::post().to(verify))
-        )
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+    HttpServer::new(|| App::new().service(web::resource("/verify").route(web::post().to(verify))))
+        .bind("0.0.0.0:8080")?
+        .run()
+        .await
 }
