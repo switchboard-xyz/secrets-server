@@ -23,51 +23,51 @@
 #!/bin/bash
 
 # Set variables
-resourceGroup=myResourceGroup
-clusterName=myAKSCluster
+resourceGroup=Default
+clusterName=secrets-server
 location=uksouth
 vmSize=Standard_DC2s_v3
-publicIpName=myAKSPublicIP
-configFile="./secrets-server-values.yaml"
+publicIpName=secrets-ip
+configFile="secrets-server-values.yaml"
 
 if ! az network public-ip list | jq '.[].name' | grep $publicIpName; then
     echo "Target cluster not found. Creating cluster...";
 
-# Create a resource group
-az group create --name $resourceGroup --location $location
+    # Create a resource group
+    az group create --name $resourceGroup --location $location
 
-# Create an AKS cluster
-az aks create \
-    --resource-group $resourceGroup \
-    --name $clusterName \
-    --node-vm-size $vmSize \
-    --generate-ssh-keys
+    # Create an AKS cluster
+    az aks create \
+        --resource-group $resourceGroup \
+        --name $clusterName \
+        --node-vm-size $vmSize \
+        --generate-ssh-keys
 
-az network public-ip create \
-    --resource-group $resourceGroup \
-    --name $publicIpName \
-    --allocation-method Static \
-    --sku Standard
+    az network public-ip create \
+        --resource-group $resourceGroup \
+        --name $publicIpName \
+        --allocation-method Static \
+        --sku Standard
 
-# Get the ID of the public IP address
-publicIpId=$(az network public-ip show \
-    --resource-group $resourceGroup \
-    --name $publicIpName \
-    --query id --output tsv)
+    # Get the ID of the public IP address
+    publicIpId=$(az network public-ip show \
+        --resource-group $resourceGroup \
+        --name $publicIpName \
+        --query id --output tsv)
 
-publicIpAddress=$(az network public-ip show \
-    --resource-group $resourceGroup \
-    --name $publicIpName \
-    --query ipAddress --output tsv)
+    publicIpAddress=$(az network public-ip show \
+        --resource-group $resourceGroup \
+        --name $publicIpName \
+        --query ipAddress --output tsv)
 
-sed -i "s/publicIP:.*$/publicIP: $publicIpAddress/" $configFile
+    sed -i "s/publicIP:.*$/publicIP: $publicIpAddress/" $configFile
 
-# Update the AKS cluster to use the public IP address
-az aks update \
-    --resource-group $resourceGroup \
-    --name $clusterName \
-    --load-balancer-managed-outbound-ip-count 0 \
-    --load-balancer-outbound-ips $publicIpId
+    # Update the AKS cluster to use the public IP address
+    az aks update \
+        --resource-group $resourceGroup \
+        --name $clusterName \
+        --load-balancer-managed-outbound-ip-count 0 \
+        --load-balancer-outbound-ips $publicIpId
 
 else
     echo "Cluster exists already. Connecting...";
