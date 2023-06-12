@@ -10,5 +10,5 @@ spec:
       port: 8080
       targetPort: 8080
       name: server
-
-        
+  type: LoadBalancer
+  loadBalancerIP: {{ $.Values.publicIP }}
