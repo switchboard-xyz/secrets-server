@@ -30,6 +30,9 @@ vmSize=Standard_DC2s_v3
 publicIpName=myAKSPublicIP
 configFile="./secrets-server-values.yaml"
 
+if ! az network public-ip list | jq '.[].name' | grep $publicIpName; then
+    echo "Target cluster not found. Creating cluster...";
+
 # Create a resource group
 az group create --name $resourceGroup --location $location
 
@@ -57,6 +60,7 @@ publicIpAddress=$(az network public-ip show \
     --name $publicIpName \
     --query ipAddress --output tsv)
 
+sed -i "s/publicIP:.*$/publicIP: $publicIpAddress/" $configFile
 
 # Update the AKS cluster to use the public IP address
 az aks update \
@@ -64,6 +68,10 @@ az aks update \
     --name $clusterName \
     --load-balancer-managed-outbound-ip-count 0 \
     --load-balancer-outbound-ips $publicIpId
+
+else
+    echo "Cluster exists already. Connecting...";
+fi
 
 az aks get-credentials --resource-group $resourceGroup --name $clusterName
 
