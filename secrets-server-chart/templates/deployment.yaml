@@ -24,7 +24,7 @@ spec:
       containers:
       - env:
         - name: CONFIGS
-          value: {{ (.Files.Get "configs.jsonc" | replace "\n" " " | quote) }}
+          value: {{ (.Files.Get "../configs.jsonc" | replace "\n" " " | quote) }}
         image: {{ $values.image }}
         name: secrets-server
         imagePullPolicy: Always
@@ -32,36 +32,3 @@ spec:
         - name: web
           containerPort: 8080
           protocol: TCP
-        # - name: liveness-port
-          # containerPort: 8080
-          # protocol: TCP
-
-        # startupProbe:
-          # httpGet:
-            # path: /healthz
-            # port: liveness-port
-          # initialDelaySeconds: 5
-          # failureThreshold: 30
-          # periodSeconds: 5
-          # timeoutSeconds: 10
-        volumeMounts:
-        - mountPath: /var/run/aesmd
-          name: var-run-aesmd
-        - mountPath: /dev/sgx/enclave
-          name: dev-sgx-enclave
-        - mountPath: /dev/sgx/provision
-          name: dev-sgx-provision
-      volumes:
-      - name: var-run-aesmd
-        hostPath:
-          path: /var/run/aesmd/
-      - name: dev-sgx-enclave
-        hostPath:
-          path: /dev/sgx/enclave
-      - name: dev-sgx-provision
-        hostPath:
-          path: /dev/sgx/provision
-
-
-
-

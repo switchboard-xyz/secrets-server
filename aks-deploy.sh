@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-clusterName=secrets-server3
-publicIpName=secrets-ip3
+clusterName=secrets-server
+publicIpName=secrets-ip
 resourceGroup=Default
 location=uksouth
 vmSize=Standard_DC2s_v3
