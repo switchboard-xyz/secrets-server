@@ -38,7 +38,7 @@ if ! az network public-ip list | jq '.[].name' | grep $publicIpName > /dev/null;
         --name $publicIpName \
         --query ipAddress --output tsv)
 
-    sed -i "s/publicIP:.*$/publicIP: $publicIpAddress/" $configFile
+    sed -iE "s;publicIP.*$;publicIP: $publicIpAddress;" $configFile
 
     # Update the AKS cluster to use the public IP address
     az aks update \
