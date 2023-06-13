@@ -21,6 +21,8 @@ if ! az aks list | jq '.[].name' | grep $clusterName > /dev/null; then
         --node-vm-size $vmSize \
         --generate-ssh-keys
 
+    az aks enable-addons --addons confcom --name $clusterName --resource-group $resourceGroup
+
     nodeResourceGroup=$(az aks show --resource-group $resourceGroup --name $clusterName --query nodeResourceGroup -o tsv)
 
     az network public-ip create \
@@ -71,6 +73,5 @@ az role assignment create \
     --scope ${RG_SCOPE}
 
 az aks get-credentials --resource-group $resourceGroup --name $clusterName
-az aks enable-addons --addons confcom --name $clusterName --resource-group $resourceGroup 2> /dev/null || true
 helm upgrade -i secrets-server ./secrets-server-chart -f $configFile
 echo -e "\033[0;32mServer hosted at $publicIpAddress\033[0m"

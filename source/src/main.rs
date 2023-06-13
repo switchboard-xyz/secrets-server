@@ -156,6 +156,15 @@ struct VerifyPayload {
     pubkey: Vec<u8>,
 }
 
+#[allow(dead_code)]
+#[allow(non_snake_case)]
+#[derive(Debug, Deserialize)]
+struct Configs {
+    mrEnclaves: Vec<String>,
+    permittedAdvisories: Vec<String>,
+    keys: HashMap<String, String>,
+}
+
 async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     let configs_str = std::env::var("CONFIGS").unwrap();
     let configs: Configs = serde_json::from_str(&configs_str).unwrap();
@@ -166,11 +175,11 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
         .as_secs() as i64;
     let (is_success, advisories) = ecdsa_quote_verification(&payload.quote, current_time);
     if !is_success {
-        return HttpResponse::Unauthorized().finish();
+        return HttpResponse::Unauthorized().body("QuoteVerifyFailure");
     }
     for advisory in advisories {
         if !configs.permittedAdvisories.contains(&advisory) {
-            return HttpResponse::Unauthorized().finish();
+            return HttpResponse::Unauthorized().body("IllegalAdvisoryPresent");
         }
     }
     let quote = sgx_quote::Quote::parse(&payload.quote).unwrap();
@@ -182,7 +191,7 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
         }
     }
     if !mr_enclave_found {
-        return HttpResponse::Unauthorized().finish();
+        return HttpResponse::Unauthorized().body("MrEnclaveNotFound");
     }
     let keyhash = &quote.isv_report.report_data[..32];
     if keyhash != Sha256::digest(&payload.pubkey).as_slice() {
@@ -196,15 +205,6 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
 
     // TODO: encrypt with pubkey
     HttpResponse::Ok().body(configs_str)
-}
-
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-#[derive(Debug, Deserialize)]
-struct Configs {
-    mrEnclaves: Vec<String>,
-    permittedAdvisories: Vec<String>,
-    keys: HashMap<String, String>,
 }
 
 #[actix_web::main]
