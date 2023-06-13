@@ -74,5 +74,5 @@ else
 fi
 
 az aks get-credentials --resource-group $resourceGroup --name $clusterName
-
+az aks enable-addons --addons confcom --name $clusterName --resource-group $resourceGroup || true
 helm install secrets-server ./secrets-server-chart -f $configFile
