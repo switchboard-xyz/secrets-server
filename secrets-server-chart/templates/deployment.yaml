@@ -25,106 +25,47 @@ spec:
       - env:
         -
           name: CONFIGS
-          value:  {{ .Files.Get "configs.jsonc" | quote  }}
+          value:  "{{ .Files.Get 'secrets-server-chart/configs.jsonc'  }}"
+      image: {{ $values.image }}
+      imagePullPolicy: Always
+      name: secrets-server
+      securityContext:
+        privileged: true
+      ports:
+      - name: web
+        containerPort: 9090
+        protocol: TCP
+      - name: liveness-port
+        containerPort: 8080
+        protocol: TCP
 
-
-      # IMAGE / RESOURCES
-        image: {{ $values.image }}
-        imagePullPolicy: Always
-        name: secrets-server
-        securityContext:
-          privileged: true
-
-
-
-        ports:
-        - name: web
-          containerPort: 9090
-          protocol: TCP
-        - name: liveness-port
-          containerPort: 8080
-          protocol: TCP
-
-        # {{ if ne $values.command "shell" }}
-        # # https://github.com/kubernetes/kubernetes/issues/89898#issuecomment-876539217
-        # # Wait for the container to startup and signal they are ready to receive traffic from k8s
-        # startupProbe:
-          # httpGet:
-            # path: /healthz
-            # port: liveness-port
-          # initialDelaySeconds: 5
-          # failureThreshold: 30
-          # periodSeconds: 5
-          # timeoutSeconds: 10
-        # # Check whether the pod is ready to receive traffic. If this fails it will create a new pod
-        # livenessProbe:
-          # exec:
-            # command:
-              # - sh
-              # - -c
-              # - "curl --fail http://localhost:8080/healthz || exit 1 "
-          # initialDelaySeconds: 10
-          # periodSeconds: 30
-          # failureThreshold: 3
-          # timeoutSeconds: 5
-        # {{ end }}
-
-
-        startupProbe:
-          httpGet:
-            path: /healthz
-            port: liveness-port
-          initialDelaySeconds: 5
-          failureThreshold: 30
-          periodSeconds: 5
-          timeoutSeconds: 10
-        # Check whether the pod is ready to receive traffic. If this fails it will create a new pod
-#        livenessProbe:
-#          exec:
-#            command:
-#              - sh
-#              - -c
-#              - "curl --fail http://localhost:8080/healthz || exit 1"
-#          initialDelaySeconds: 10
-#          periodSeconds: 30
-#          failureThreshold: 3
-#          timeoutSeconds: 5
-        resources:
-          limits:
-            cpu: 3000m
-            memory: 3Gi
-          requests:
-            cpu: 3000m
-            memory: 3Gi
-
-
-#        volumeMounts:
-#        - mountPath: /home/credentials/
-#          name: google-cloud-key
-#        - mountPath: /var/run/aesmd
-#          name: var-run-aesmd
-#        - mountPath: /dev/sgx/enclave
-#          name: dev-sgx-enclave
-#        - mountPath: /dev/sgx/provision
-#          name: dev-sgx-provision
-
-        # - mountPath: /dev/isgx
-          # name: dev-isgx
-#
-#      volumes:
-#      - name: var-run-aesmd
-#        hostPath:
-#          path: /var/run/aesmd/
-#      - name: dev-sgx-enclave
-#        hostPath:
-#          path: /dev/sgx/enclave
-#      - name: dev-sgx-provision
-#        hostPath:
-#          path: /dev/sgx/provision
-#
-      # - name: dev-isgx
-        # hostPath:
-          # path: /dev/isgx
+      startupProbe:
+        httpGet:
+          path: /healthz
+          port: liveness-port
+        initialDelaySeconds: 5
+        failureThreshold: 30
+        periodSeconds: 5
+        timeoutSeconds: 10
+     volumeMounts:
+     - mountPath: /home/credentials/
+       name: google-cloud-key
+     - mountPath: /var/run/aesmd
+       name: var-run-aesmd
+     - mountPath: /dev/sgx/enclave
+       name: dev-sgx-enclave
+     - mountPath: /dev/sgx/provision
+       name: dev-sgx-provision
+   volumes:
+   - name: var-run-aesmd
+     hostPath:
+       path: /var/run/aesmd/
+   - name: dev-sgx-enclave
+     hostPath:
+       path: /dev/sgx/enclave
+   - name: dev-sgx-provision
+     hostPath:
+       path: /dev/sgx/provision
 
 
 
