@@ -24,7 +24,7 @@ spec:
       containers:
       - env:
         - name: CONFIGS
-          value: {{ (.Files.Get "../configs.jsonc" | replace "\n" " " | quote) }}
+          value: {{ (.Files.Get "configs.jsonc" | replace "\n" " " | quote) }}
         image: {{ $values.image }}
         name: secrets-server
         imagePullPolicy: Always

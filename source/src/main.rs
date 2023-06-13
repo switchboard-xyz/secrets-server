@@ -167,7 +167,11 @@ struct Configs {
 
 async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     let configs_str = std::env::var("CONFIGS").unwrap();
-    let configs: Configs = serde_json::from_str(&configs_str).unwrap();
+    let configs = serde_json::from_str(&configs_str);
+    if configs.is_err() {
+        return HttpResponse::Unauthorized().body("ConfigParseError");
+    }
+    let configs: Configs = configs.unwrap();
     println!("Received request: {:#?}", payload);
     let current_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -182,10 +186,18 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
             return HttpResponse::Unauthorized().body("IllegalAdvisoryPresent");
         }
     }
-    let quote = sgx_quote::Quote::parse(&payload.quote).unwrap();
+    let quote = sgx_quote::Quote::parse(&payload.quote);
+    if quote.is_err() {
+        return HttpResponse::Unauthorized().body("QuoteParseError");
+    }
+    let quote = quote.unwrap();
     let mut mr_enclave_found = false;
     for mr_enclave in configs.mrEnclaves {
-        if quote.isv_report.mrenclave == hex::decode(mr_enclave).unwrap() {
+        let mr_enclave = hex::decode(mr_enclave);
+        if mr_enclave.is_err() {
+            return HttpResponse::Unauthorized().body("MrEnclaveParseError");
+        }
+        if quote.isv_report.mrenclave == mr_enclave.unwrap() {
             mr_enclave_found = true;
             break;
         }
@@ -195,13 +207,17 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     }
     let keyhash = &quote.isv_report.report_data[..32];
     if keyhash != Sha256::digest(&payload.pubkey).as_slice() {
-        return HttpResponse::Unauthorized().finish();
+        return HttpResponse::Unauthorized().body("Keymismatch");
     }
-    let public_key = RsaPublicKey::from_public_key_der(&payload.pubkey).unwrap();
+    let public_key = RsaPublicKey::from_public_key_der(&payload.pubkey);
+    if public_key.is_err() {
+        return HttpResponse::Unauthorized().body("PubkeyParseError");
+    }
+    let public_key = public_key.unwrap();
     let mut rng = OsRng {};
-    let _ciphertext = public_key
-        .encrypt(&mut rng, Pkcs1v15Encrypt, configs_str.as_bytes())
-        .unwrap();
+    // let _ciphertext = public_key
+        // .encrypt(&mut rng, Pkcs1v15Encrypt, configs_str.as_bytes())
+        // .unwrap();
 
     // TODO: encrypt with pubkey
     HttpResponse::Ok().body(configs_str)
@@ -213,7 +229,6 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         println!("Started.");
         App::new().route("/", web::post().to(verify))
-
     })
     .bind("0.0.0.0:8080")?
     .run()
