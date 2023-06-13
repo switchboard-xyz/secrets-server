@@ -23,9 +23,8 @@ spec:
     spec:
       containers:
       - env:
-        -
-          name: CONFIGS
-          value:  "{{ .Files.Get 'secrets-server-chart/configs.jsonc'  }}"
+        - name: CONFIGS
+          value:  {{ .Files.Get "configs.jsonc" | quote }}
       image: {{ $values.image }}
       imagePullPolicy: Always
       name: secrets-server
@@ -47,25 +46,25 @@ spec:
         failureThreshold: 30
         periodSeconds: 5
         timeoutSeconds: 10
-     volumeMounts:
-     - mountPath: /home/credentials/
-       name: google-cloud-key
-     - mountPath: /var/run/aesmd
-       name: var-run-aesmd
-     - mountPath: /dev/sgx/enclave
-       name: dev-sgx-enclave
-     - mountPath: /dev/sgx/provision
-       name: dev-sgx-provision
-   volumes:
-   - name: var-run-aesmd
-     hostPath:
-       path: /var/run/aesmd/
-   - name: dev-sgx-enclave
-     hostPath:
-       path: /dev/sgx/enclave
-   - name: dev-sgx-provision
-     hostPath:
-       path: /dev/sgx/provision
+      volumeMounts:
+      - mountPath: /home/credentials/
+        name: google-cloud-key
+      - mountPath: /var/run/aesmd
+        name: var-run-aesmd
+      - mountPath: /dev/sgx/enclave
+        name: dev-sgx-enclave
+      - mountPath: /dev/sgx/provision
+        name: dev-sgx-provision
+    volumes:
+    - name: var-run-aesmd
+      hostPath:
+        path: /var/run/aesmd/
+    - name: dev-sgx-enclave
+      hostPath:
+        path: /dev/sgx/enclave
+    - name: dev-sgx-provision
+      hostPath:
+        path: /dev/sgx/provision
 
 
 
