@@ -59,6 +59,7 @@ publicIpAddress=$(az network public-ip show \
     --resource-group $resourceGroup \
     --name $publicIpName \
     --query ipAddress --output tsv)
+sed -i "s/publicIP:.*$/publicIP: $publicIpAddress/" $configFile
 az aks get-credentials --resource-group $resourceGroup --name $clusterName
 az aks enable-addons --addons confcom --name $clusterName --resource-group $resourceGroup 2> /dev/null || true
 helm upgrade -i secrets-server ./secrets-server-chart -f $configFile

@@ -2,8 +2,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: secrets-server-ingress
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt"
+  # annotations:
+    # cert-manager.io/cluster-issuer: "letsencrypt"
 spec:
   rules:
   - host: {{ $.Values.host }}
@@ -18,7 +18,7 @@ spec:
               number: 8080
 
   ingressClassName: nginx
-  tls:
-  - hosts:
-    - {{ $.Values.host }}
-    secretName: secrets-server-cert-manager-tls
+  # tls:
+  # - hosts:
+    # - {{ $.Values.host }}
+    # secretName: secrets-server-cert-manager-tls
