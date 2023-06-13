@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-clusterName=secrets-server
-publicIpName=secrets-ip
+clusterName=secrets-server4
+publicIpName=secrets-ip4
 resourceGroup=Default
 location=uksouth
 vmSize=Standard_DC2s_v3
@@ -62,7 +62,7 @@ publicIpAddress=$(az network public-ip show \
     --resource-group $nodeResourceGroup \
     --name $publicIpName \
     --query ipAddress --output tsv)
-sed -i "s/publicIP:.*$/publicIP: $publicIpAddress/" $configFile
+sed -iE "s;publicIP.*$;publicIP: $publicIpAddress;" $configFile
 CLIENT_ID=$(az aks show --name $clusterName --resource-group $resourceGroup --query identity.principalId -o tsv)
 RG_SCOPE=$(az group show --name $resourceGroup --query id -o tsv)
 az role assignment create \
