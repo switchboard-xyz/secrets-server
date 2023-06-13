@@ -25,7 +25,7 @@ spec:
       - env:
         -
           name: CONFIGS
-          value:  "{{ .Files.Get 'secrets-server-chart/configs.jsonc'  }}"
+          value: {{ .Files.Get "configs.jsonc" | quote }}
       image: {{ $values.image }}
       imagePullPolicy: Always
       name: secrets-server
