@@ -215,12 +215,11 @@ async fn verify(payload: web::Json<VerifyPayload>) -> impl Responder {
     }
     let public_key = public_key.unwrap();
     let mut rng = OsRng {};
-    // let _ciphertext = public_key
-        // .encrypt(&mut rng, Pkcs1v15Encrypt, configs_str.as_bytes())
-        // .unwrap();
+    let ciphertext = public_key
+        .encrypt(&mut rng, Pkcs1v15Encrypt, configs_str.as_bytes())
+        .unwrap();
 
-    // TODO: encrypt with pubkey
-    HttpResponse::Ok().body(configs_str)
+    HttpResponse::Ok().body(ciphertext)
 }
 
 #[actix_web::main]
