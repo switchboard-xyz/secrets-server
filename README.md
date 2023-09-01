@@ -1,4 +1,25 @@
+<div align="center">
+
+![Switchboard Logo](https://github.com/switchboard-xyz/core-sdk/raw/main/website/static/img/icons/switchboard/avatar.png)
+
 # Switchboard Secrets Server
+
+> Kubernets manifests for hosting your own secrets for Switchboard functions
+
+  <p>
+    <a href="https://discord.gg/switchboardxyz">
+      <img alt="Discord" src="https://img.shields.io/discord/841525135311634443?color=blueviolet&logo=discord&logoColor=white" />
+    </a>
+    <a href="https://twitter.com/switchboardxyz">
+      <img alt="Twitter" src="https://img.shields.io/twitter/follow/switchboardxyz?label=Follow+Switchboard" />
+    </a>
+  </p>
+
+  <h4>
+    <strong>Documentation: </strong><a href="https://docs.switchboard.xyz">docs.switchboard.xyz</a>
+  </h4>
+</div>
+
 Welcome to the Switchboard Secrets server repository.
 
 This repository can help you store secrets securely outside of your Switchboard functions to only ever be loaded inside your functions runtime.
@@ -18,3 +39,7 @@ To use this secrets server you must do the following:
 - Add all the secrets you wish to deliver to your function as key/value pairs under the `keys` config
 - Deploy your secrets server
 - All your secrets will then be securely communicated with your function enclave, completely encrypted to anything outside of your function's enclave
+
+<div align="center">
+![Sequence Diagram](https://showme.redstarplugin.com/d/d:tV50j0we)
+</div>
