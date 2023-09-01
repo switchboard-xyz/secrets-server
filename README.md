@@ -1,6 +1,4 @@
-# secrets-server
-
-## Switchboard Secrets Server
+# Switchboard Secrets Server
 Welcome to the Switchboard Secrets server repository.
 
 This repository can help you store secrets securely outside of your Switchboard functions to only ever be loaded inside your functions runtime.
