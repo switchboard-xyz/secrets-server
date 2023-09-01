@@ -41,5 +41,5 @@ To use this secrets server you must do the following:
 - All your secrets will then be securely communicated with your function enclave, completely encrypted to anything outside of your function's enclave
 
 <div align="center">
-![Sequence Diagram](https://showme.redstarplugin.com/d/d:tV50j0we)
+  <img src="https://showme.redstarplugin.com/d/d:tV50j0we" alt="Sequence Diagram">
 </div>
