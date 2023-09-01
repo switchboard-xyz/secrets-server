@@ -33,7 +33,7 @@ These quotes signify example which code has made the request for the secrets and
 To use this secrets server you must do the following:
 
 - Initialize a kubernets cluster with the provided helm manifest to retrieve the allocated static IP for your cluster
-- In your function, call `sb_functions_sdk::secrets::fetch_secrets("http://<YOUR_SERVER_IP>`).await`
+- In your function, call `fetch_secrets("http://<YOUR_SERVER_IP>`).await`
 - Build your Switchboard Function to retrieve the `MR_ENCLAVE` of your function
 - Add this `MR_ENCLAVE` to the `allowedMrEnclaves` configs in `secrets-server-chart/configs.jsonc`
 - Add all the secrets you wish to deliver to your function as key/value pairs under the `keys` config
