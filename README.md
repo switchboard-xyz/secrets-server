@@ -33,7 +33,7 @@ These quotes signify example which code has made the request for the secrets and
 To use this secrets server you must do the following:
 
 - Initialize a kubernets cluster with the provided helm manifest to retrieve the allocated static IP for your cluster
-- In your function, call `switchboard_common::fetch_secrets("http://<YOUR_SERVER_IP>").await`, docs [here](https://docs.rs/switchboard-common/0.8.9/switchboard_common/secrets/fn.fetch_secrets.html), (Moving to switchboard_evm/switchboard_solana)
+- In your function, call `switchboard_common::fetch_secrets("http://<YOUR_SERVER_IP>").await`, docs [here (evm)]([https://docs.rs/switchboard-common/0.8.9/switchboard_common/secrets/fn.fetch_secrets.html](https://docs.rs/switchboard-evm/latest/switchboard_evm/secrets/fn.fetch_secrets.html)), [here (solana)](https://docs.rs/switchboard-solana/latest/switchboard_solana/secrets/fn.fetch_secrets.html)
 - Build your Switchboard Function to retrieve the `MR_ENCLAVE` of your function
 - Add this `MR_ENCLAVE` to the `allowedMrEnclaves` configs in `secrets-server-chart/configs.jsonc`
 - Add all the secrets you wish to deliver to your function as key/value pairs under the `keys` config
