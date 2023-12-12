@@ -1,0 +1,14 @@
+{
+  "name": "secrets-server",
+  "scripts": {
+    "cargo:build": "cargo build --features all",
+    "lint": "cargo fmt -- --check",
+    "fix": "cargo fmt",
+    "test:sgx": "cargo test --features all -- --nocapture",
+    "docker:build": "docker buildx build -f Dockerfile --platform linux/amd64 --tag switchboardlabs/secrets-server:dev-$(cat ../../version) --pull --load ../../",
+    "docker:publish": "echo \"Building switchboardlabs/secrets-server:dev-$(cat ../../version) ...\"; docker buildx build -f Dockerfile --platform linux/amd64 --tag switchboardlabs/secrets-server:dev-$(cat ../../version) --pull --push ../../ && echo \"Published switchboardlabs/secrets-server:dev-$(cat ../../version)\"",
+    "prod:set": "az aks get-credentials -g Default -n sb-internal",
+    "prod:uprev": "helm upgrade -i secret-server ./helm-chart -f helm-values.yaml",
+    "prod:logs": "kubectl logs -f -l app=secrets-server --all-containers --max-log-requests=100"
+  }
+}
