@@ -47,7 +47,7 @@ To use Switchboard secrets, you can **[1]** self-host this server or **[2]** bui
 ```rust
 let YOUR_PUBKEY: &str = ...;
 // { keys: HashMap<String, String> }
-let sb_secrets = switchboard_solana::secrets::fetch_secrets(
+let sb_secrets = switchboard_solana::fetch_secrets(
   YOUR_PUBKEY,
   "http://<YOUR_SERVER_IP>"
 ).await;
@@ -61,8 +61,10 @@ let YOUR_SECRET_VALUE = sb_secrets.keys.get("YOUR_SECRET_NAME");
 
 ```rust
 // { keys: HashMap<String, String> }
-let sb_secrets = switchboard_solana::secrets::fetch_secrets(your_pubkey)
-    .await;
+let secrets = switchboard_solana::fetch_secrets(
+  user_pubkey.as_str(),
+  None
+).await;
 let YOUR_SECRET_VALUE = sb_secrets.keys.get("YOUR_SECRET_NAME");
 ```
 
