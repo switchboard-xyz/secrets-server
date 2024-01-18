@@ -1,5 +1,7 @@
 use crate::*;
 
+mod auth;
+
 // https://github.com/poem-web/poem/blob/master/examples/openapi/users-crud/src/main.rs
 use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit},
@@ -47,6 +49,18 @@ struct UpdateUserPayload {
     timestamp: u64,
 }
 
+impl auth::AuthPayloadTrait for UpdateUserPayload {
+    fn user_pubkey(&self) -> &str {
+        self.user_pubkey.as_str()
+    }
+    fn ciphersuite(&self) -> &str {
+        self.ciphersuite.as_str()
+    }
+    fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
+}
+
 #[derive(Debug, Object, Clone, Eq, PartialEq, Serialize, Deserialize)]
 struct DeleteSecretPayload {
     user_pubkey: String,
@@ -55,8 +69,20 @@ struct DeleteSecretPayload {
     timestamp: u64,
 }
 
+impl auth::AuthPayloadTrait for DeleteSecretPayload {
+    fn user_pubkey(&self) -> &str {
+        self.user_pubkey.as_str()
+    }
+    fn ciphersuite(&self) -> &str {
+        self.ciphersuite.as_str()
+    }
+    fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
+}
+
 #[derive(Debug, Object, Clone, Eq, PartialEq, Serialize, Deserialize)]
-struct PutMrenclaveWhitelistPayload {
+struct PutMrEnclaveWhitelistPayload {
     user_pubkey: String,
     ciphersuite: String,
     mr_enclave: String,
@@ -64,12 +90,36 @@ struct PutMrenclaveWhitelistPayload {
     timestamp: u64,
 }
 
+impl auth::AuthPayloadTrait for PutMrEnclaveWhitelistPayload {
+    fn user_pubkey(&self) -> &str {
+        self.user_pubkey.as_str()
+    }
+    fn ciphersuite(&self) -> &str {
+        self.ciphersuite.as_str()
+    }
+    fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
+}
+
 #[derive(Debug, Object, Clone, Eq, PartialEq, Serialize, Deserialize)]
-struct PutMrenclavePayload {
+struct PutMrEnclavePayload {
     user_pubkey: String,
     ciphersuite: String,
     mr_enclave: String,
     timestamp: u64,
+}
+
+impl auth::AuthPayloadTrait for PutMrEnclavePayload {
+    fn user_pubkey(&self) -> &str {
+        self.user_pubkey.as_str()
+    }
+    fn ciphersuite(&self) -> &str {
+        self.ciphersuite.as_str()
+    }
+    fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
 }
 
 #[derive(Debug, Object, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -79,6 +129,18 @@ struct PutUserSecretPayload {
     secret: String,
     secret_name: String,
     timestamp: u64,
+}
+
+impl auth::AuthPayloadTrait for PutUserSecretPayload {
+    fn user_pubkey(&self) -> &str {
+        self.user_pubkey.as_str()
+    }
+    fn ciphersuite(&self) -> &str {
+        self.ciphersuite.as_str()
+    }
+    fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
 }
 
 #[derive(Debug, Object, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -103,6 +165,8 @@ enum HttpResponse {
     OkSecrets(Json<Vec<SecretInfoPg>>),
     #[oai(status = 200)]
     OkEncryptedData(Json<EncryptedData>),
+    #[oai(status = 400)]
+    BadRequest(poem_openapi::payload::PlainText<String>),
     #[oai(status = 401)]
     Unauthorized(poem_openapi::payload::PlainText<String>),
     #[oai(status = 404)]
@@ -165,8 +229,13 @@ impl Api {
         &self,
         req: &'a Request,
         db: Data<&'a PostgresStore>,
-        payload: Json<UpdateUserPayload>,
+        payload_vec: Vec<u8>,
     ) -> Result<HttpResponse> {
+        let payload = match auth::authenticate_request::<UpdateUserPayload>(req, payload_vec) {
+            Ok(payload) => payload,
+            Err(err) => return Ok(auth_fail(err)),
+        };
+
         info!("PutUser: {}", payload.user_pubkey);
         let contact_info = payload
             .contact_info
@@ -242,8 +311,12 @@ impl Api {
         &self,
         req: &'a Request,
         db: Data<&'a PostgresStore>,
-        payload: Json<PutUserSecretPayload>,
+        payload_vec: Vec<u8>,
     ) -> Result<HttpResponse> {
+        let payload = match auth::authenticate_request::<PutUserSecretPayload>(req, payload_vec) {
+            Ok(payload) => payload,
+            Err(err) => return Ok(auth_fail(err)),
+        };
         info!(
             "PutUserSecret: {} {}",
             payload.user_pubkey, payload.secret_name
@@ -288,8 +361,13 @@ impl Api {
         &self,
         req: &'a Request,
         db: Data<&'a PostgresStore>,
-        payload: Json<DeleteSecretPayload>,
+        payload_vec: Vec<u8>,
     ) -> Result<HttpResponse> {
+        let payload = match auth::authenticate_request::<DeleteSecretPayload>(req, payload_vec) {
+            Ok(payload) => payload,
+            Err(err) => return Ok(auth_fail(err)),
+        };
+
         info!(
             "DeleteUserSecret: {} {}",
             payload.user_pubkey, payload.secret_name
@@ -390,9 +468,15 @@ impl Api {
     #[oai(path = "/mrenclave", method = "put")]
     async fn put_mrenclave<'a>(
         &self,
+        req: &'a Request,
         db: Data<&'a PostgresStore>,
-        payload: Json<PutMrenclavePayload>,
+        payload_vec: Vec<u8>,
     ) -> Result<HttpResponse> {
+        let payload = match auth::authenticate_request::<PutMrEnclavePayload>(req, payload_vec) {
+            Ok(payload) => payload,
+            Err(err) => return Ok(auth_fail(err)),
+        };
+
         info!(
             "PutMrEnclave: {} {}",
             payload.user_pubkey, payload.mr_enclave
@@ -436,8 +520,13 @@ impl Api {
         &self,
         req: &'a Request,
         db: Data<&'a PostgresStore>,
-        payload: Json<PutMrenclavePayload>,
+        payload_vec: Vec<u8>,
     ) -> Result<HttpResponse> {
+        let payload = match auth::authenticate_request::<PutMrEnclavePayload>(req, payload_vec) {
+            Ok(payload) => payload,
+            Err(err) => return Ok(auth_fail(err)),
+        };
+
         info!(
             "DeleteMrEnclave: {} {}",
             payload.user_pubkey, payload.mr_enclave
@@ -483,8 +572,14 @@ impl Api {
         &self,
         req: &'a Request,
         db: Data<&'a PostgresStore>,
-        payload: Json<PutMrenclaveWhitelistPayload>,
+        payload_vec: Vec<u8>,
     ) -> Result<HttpResponse> {
+        let payload =
+            match auth::authenticate_request::<PutMrEnclaveWhitelistPayload>(req, payload_vec) {
+                Ok(payload) => payload,
+                Err(err) => return Ok(auth_fail(err)),
+            };
+
         info!(
             "AddMrEnclaveToWhitelist: {} {} {}",
             payload.user_pubkey, payload.secret_name, payload.mr_enclave
@@ -541,8 +636,14 @@ impl Api {
         &self,
         req: &'a Request,
         db: Data<&'a PostgresStore>,
-        payload: Json<PutMrenclaveWhitelistPayload>,
+        payload_vec: Vec<u8>,
     ) -> Result<HttpResponse> {
+        let payload =
+            match auth::authenticate_request::<PutMrEnclaveWhitelistPayload>(req, payload_vec) {
+                Ok(payload) => payload,
+                Err(err) => return Ok(auth_fail(err)),
+            };
+
         info!(
             "DeleteMrEnclaveWhitelist: {} {} {}",
             payload.user_pubkey, payload.secret_name, payload.mr_enclave
@@ -612,9 +713,6 @@ fn encrypt_bytes(
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
     let cipher = Aes256Gcm::new(&key);
 
-    println!("nonce: {:?}", nonce);
-    println!("key: {:?}", key);
-
     let encrypted_data = match cipher.encrypt(&nonce, unencrypted) {
         Ok(value) => value,
         Err(e) => {
@@ -639,10 +737,14 @@ fn encrypt_bytes(
 fn log_error(error: &Error) {
     error!("An error occurred: {:#?}", error);
 }
+/// Consistent handling for failed authentication.
+fn auth_fail(msg: String) -> HttpResponse {
+    let message = format!("AuthFailed: {:#?}", msg);
+    error!("{}", message);
+    HttpResponse::Unauthorized(PlainText(message))
+}
 /// Return a Sha256 hash a string.
 fn hash_secret(secret: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(secret);
-    let result = hasher.finalize();
+    let result = Sha256::digest(secret);
     format!("{:x}", result)
 }

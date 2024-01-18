@@ -161,7 +161,7 @@ impl PostgresStore {
         ciphersuite: &str,
         contact_info: &str,
     ) -> Result<()> {
-        println!(
+        info!(
             "inserting (pubkey, ciphersuite, contact info):\n{}\n{}\n{}",
             user_pubkey, ciphersuite, contact_info
         );

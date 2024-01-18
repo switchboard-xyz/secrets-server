@@ -4,9 +4,6 @@ pub use kv_log_macro::{debug, error, info, trace};
 pub mod args;
 pub use args::*;
 
-pub mod auth;
-pub use auth::*;
-
 pub mod quote;
 
 pub mod api;
@@ -34,19 +31,21 @@ pub use std::time::{SystemTime, UNIX_EPOCH};
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), std::io::Error> {
+    dotenvy::dotenv().ok();
+
+    // Init logging
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(tracing::level_filters::LevelFilter::DEBUG.into())
+                .with_env_var("RUST_LOG")
+                .from_env_lossy(),
+        )
+        .init();
+
     // Access the version
     let sbv3_version = env!("SBV3_VERSION");
-    println!("Version: {}", sbv3_version);
-
-    // Set up logging
-    femme::with_level(
-        femme::LevelFilter::from_str(
-            std::env::var("RUST_LOG")
-                .unwrap_or("info".to_string())
-                .as_str(),
-        )
-        .unwrap_or(femme::LevelFilter::Info),
-    );
+    info!("Version: {}", sbv3_version);
 
     // Parse args
     let args: Arc<Args> = Arc::new(Args::parse());
@@ -68,12 +67,11 @@ async fn main() -> std::result::Result<(), std::io::Error> {
         .nest("/ui", ui)
         .at("/spec", poem::endpoint::make_sync(move |_| spec.clone()))
         .with(poem::middleware::Cors::new())
-        .with(SignatureVerificationMiddleware)
         // TODO: add middleware for opentelemetry metrics
         .data(store);
 
     let mut addr = format!("0.0.0.0:{}", server_port);
-    println!("Server Starting on address ({}) ...", addr);
+    info!("Server Starting on address ({}) ...", addr);
 
     poem::Server::new(TcpListener::bind(addr)).run(app).await
 }

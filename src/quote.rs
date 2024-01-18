@@ -7,7 +7,6 @@ use std::ptr;
 use std::time::{Duration, SystemTime};
 
 use intel_tee_quote_verification_rs::*;
-use intel_tee_quote_verification_sys as qvl_sys;
 
 #[cfg(debug_assertions)]
 const SGX_DEBUG_FLAG: i32 = 1;
@@ -46,20 +45,20 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
     match tee_get_supplemental_data_version_and_size(quote) {
         Ok((supp_ver, supp_size)) => {
             if supp_size == mem::size_of::<sgx_ql_qv_supplemental_t>() as u32 {
-                println!("\tInfo: tee_get_quote_supplemental_data_version_and_size successfully returned.");
-                println!("\tInfo: latest supplemental data major version: {}, minor version: {}, size: {}",
+                info!("\tInfo: tee_get_quote_supplemental_data_version_and_size successfully returned.");
+                info!("\tInfo: latest supplemental data major version: {}, minor version: {}, size: {}",
                     u16::from_be_bytes(supp_ver.to_be_bytes()[..2].try_into().unwrap()),
                     u16::from_be_bytes(supp_ver.to_be_bytes()[2..].try_into().unwrap()),
                     supp_size,
                 );
                 supp_data_desc.data_size = supp_size;
             } else {
-                println!("\tWarning: Quote supplemental data size is different between DCAP QVL and QvE, please make sure you installed DCAP QVL and QvE from same release.");
+                info!("\tWarning: Quote supplemental data size is different between DCAP QVL and QvE, please make sure you installed DCAP QVL and QvE from same release.");
                 // return false;
             }
         }
         Err(e) => {
-            println!(
+            info!(
                 "\tError: tee_get_quote_supplemental_data_size failed: {:#04x}",
                 e as u32
             );
@@ -70,11 +69,11 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
     // get collateral
     let collateral = match tee_qv_get_collateral(quote) {
         Ok(c) => {
-            println!("\tInfo: tee_qv_get_collateral successfully returned.");
+            info!("\tInfo: tee_qv_get_collateral successfully returned.");
             Some(c)
         }
         Err(e) => {
-            println!("\tError: tee_qv_get_collateral failed: {:#04x}", e as u32);
+            info!("\tError: tee_qv_get_collateral failed: {:#04x}", e as u32);
             None
         }
     };
@@ -98,9 +97,9 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
         Ok((colla_exp_stat, qv_result)) => {
             collateral_expiration_status = colla_exp_stat;
             quote_verification_result = qv_result;
-            println!("\tInfo: App: tee_verify_quote successfully returned.");
+            info!("\tInfo: App: tee_verify_quote successfully returned.");
         }
-        Err(e) => println!("\tError: App: tee_verify_quote failed: {:#04x}", e as u32),
+        Err(e) => info!("\tError: App: tee_verify_quote failed: {:#04x}", e as u32),
     }
 
     // check verification result
@@ -111,9 +110,9 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
             // this value should be considered in your own attestation/verification policy
             //
             if collateral_expiration_status == 0 {
-                println!("\tInfo: App: Verification completed successfully.");
+                info!("\tInfo: App: Verification completed successfully.");
             } else {
-                println!("\tWarning: App: Verification completed, but collateral is out of date based on 'expiration_check_date' you provided.");
+                info!("\tWarning: App: Verification completed, but collateral is out of date based on 'expiration_check_date' you provided.");
                 // TODO: Re-enable this check.
                 // return false;
             }
@@ -124,7 +123,7 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
         | sgx_ql_qv_result_t::SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED
         | sgx_ql_qv_result_t::SGX_QL_QV_RESULT_SW_HARDENING_NEEDED
         | sgx_ql_qv_result_t::SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED => {
-            println!(
+            info!(
                 "\tWarning: App: Verification completed with Non-terminal result: {:x}",
                 quote_verification_result as u32
             );
@@ -133,7 +132,7 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
         | sgx_ql_qv_result_t::SGX_QL_QV_RESULT_REVOKED
         | sgx_ql_qv_result_t::SGX_QL_QV_RESULT_UNSPECIFIED
         | _ => {
-            println!(
+            info!(
                 "\tError: App: Verification completed with Terminal result: {:x}",
                 quote_verification_result as u32
             );
@@ -148,8 +147,8 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
         // here we only print supplemental data version for demo usage
         //
         let version_s = unsafe { supp_data.__bindgen_anon_1.__bindgen_anon_1 };
-        // println!("\tInfo: Supplemental data Major Version: {}", version_s.major_version);
-        // println!("\tInfo: Supplemental data Minor Version: {}", version_s.minor_version);
+        // info!("\tInfo: Supplemental data Major Version: {}", version_s.major_version);
+        // info!("\tInfo: Supplemental data Minor Version: {}", version_s.minor_version);
 
         // print SA list if it is a valid UTF-8 string
 
@@ -166,12 +165,12 @@ pub fn ecdsa_quote_verification(quote: &[u8]) -> bool {
                 .split_whitespace()
                 .filter(|x| !x.is_empty())
                 .collect();
-            println!("{:#?}", advisories);
-            println!("\tInfo: Advisory ID: {}", s);
+            info!("{:#?}", advisories);
+            info!("\tInfo: Advisory ID: {}", s);
             let mut disallowed_advisories = advisories.clone();
             disallowed_advisories.retain(|item| !PERMITTED_ADVISORIES.contains(item));
             if !disallowed_advisories.is_empty() {
-                println!(
+                info!(
                     "Disallowed advisory list non-empty {:?}",
                     disallowed_advisories
                 );
